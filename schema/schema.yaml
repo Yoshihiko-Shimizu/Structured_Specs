@@ -1,0 +1,239 @@
+# yaml-language-server: $schema=https://json-schema.org/draft-07/schema
+$schema: https://json-schema.org/draft-07/schema
+title: "Requirement Document Schema"
+description: USDM (Universal Specification Describing Manner)に基づいて、要求仕様を記述するためのYAMLスキーマ
+
+type: object
+$comment: ドキュメントの定義
+example:
+  feature:
+    feature_name: 印刷機能
+    requirements:
+      - req_id: CH-02
+        requirement: 印刷開始時にインクの残量を調べて、最後まで印刷できない可能性があれば印刷依頼者のPC上に知らせてほしい
+        reason: 印刷内容を知っている人に、最初に印刷できない可能性を知らせたい
+        description: 印刷途中の監視機能は既に提供されており、これは印刷開始時に知らせるもの
+        spec_groups:
+          - group_name: チェックのタイミング
+            specifications:
+              - spec_id: CH-02-1
+                specification: 刷開始の操作を完了した時点でプリンターと交信してインクの残量（全カートリッジ分）を知る
+                reason: 印刷ボリュームと比べて判断する必要があるから
+          - group_name: 確認操作
+            specifications:
+              - spec_id: CH-02-2
+                specification: 『注意』または『警告』のアナウンスを出したときは、『確認』の操作によって印刷処理を続ける
+                description: インクの交換はこの間に行い、交換後に『確認』操作によって印刷を続ける
+properties:
+  feature: 
+    $ref: "#/definitions/structure/feature"
+required:
+  - feature
+additionalProperties: false
+
+definitions:
+  structure:
+    $comment: ｜
+      各要素間の構造に関する定義
+      要素の親子関係について編集する場合は、 propertiesとoneOf配下の両方を更新する
+    feature:
+      type: object
+      description: |
+        featureは、要求仕様の集合である1文書にあたり、各featureは1つのシステム機能やサービス単位を表します。
+        システム内に複数の機能が存在する場合に、機能単位での分類に利用されることを想定しています。
+        複数の要求(requirements)および要求グループ(req_group)を子要素として持ちます。
+      properties: 
+        feature_name:
+          $ref: "#/definitions/content/name"
+        requirements:
+          description: test
+          type: array
+          items: 
+            $ref: "#/definitions/structure/requirement"
+          minItems: 1
+          maxItems: 10
+          uniqueItems: true
+        req_groups:
+          type: array
+          items: 
+            $ref: "#/definitions/structure/requirement_group"
+          minItems: 1
+          maxItems: 10
+          uniqueItems: true
+      oneOf:
+        - properties:
+            feature_name: true 
+            requirements: true
+          additionalProperties: false
+        - properties:
+            feature_name: true 
+            req_groups: true
+          additionalProperties: false
+
+    requirement_group:
+      type: object
+      description: |
+        requirement_groupは、共通の観点や目的を持つ複数の要求を論理的に分類するための構造です。
+        範囲の広すぎる要求を分割し、要求グループとしてまとめることで要求の範囲を調節することができます。
+        複数の要求(requirements)を子要素として持ちます。
+      properties:
+        group_name: 
+          $ref: "#/definitions/content/name"
+        description:
+          $ref: "#/definitions/content/content"
+        requirements:
+              type: array
+              items: 
+                $ref: "#/definitions/structure/requirement"
+              minItems: 1
+              maxItems: 10
+              uniqueItems: true
+      required:
+        - group_name
+        - requirements
+      additionalProperties: false
+
+    requirement: 
+      type: object
+      description: |
+        requirementは、現実の課題を解決するために、システムに期待される性質を記述する要素です。
+        要求には仕様を導出するという役割を持ち、その「範囲」を適切に表現する必要があります。
+        Requirmentは以下の3つの要素で構成されます。
+        要求(requirment): システムに期待される動作を記述します。その範囲においてシステムに期待するすべての振る舞いを「動詞とその目的語」として表現する必要があります
+        理由(reason): 要求の理由を記述します。理由は以下のように分類できます。
+          - きっかけ: 
+        説明(description): 要求の理解を助けるために用語の説明や事例の紹介を記述します。記載は任意のため記述しない場合は「-」等の記号を用いて、記述がないことを明確にします。
+        複数の要求(requirements)および仕様(specificatio)、仕様グループ(spec_group)を子要素として持ちます。
+        スキーマ上は制限がありませんが要求の階層は2階層までが推奨となっています。 
+      properties:
+        req_id: 
+          $ref: "#/definitions/content/id"
+        requirement:
+          $ref: "#/definitions/content/content"
+        reason:
+          $ref: "#/definitions/content/content"
+        description:
+          $ref: "#/definitions/content/content"
+        requirements:
+              type: array
+              items: 
+                $ref: "#/definitions/structure/requirement"
+              minItems: 1
+              maxItems: 10
+              uniqueItems: true
+        specifications:
+          type: array
+          items: 
+            $ref: "#/definitions/structure/specification"
+          minItems: 1
+          maxItems: 10
+          uniqueItems: true
+        spec_groups:
+          type: array
+          items: 
+            $ref: "#/definitions/structure/specification_group"
+          minItems: 1
+          maxItems: 10
+          uniqueItems: true
+      required:
+        - req_id
+        - requirement
+        - reason
+        - description
+      oneOf:
+        - properties: 
+            req_id: true
+            requirement: true
+            reason: true
+            description: true
+            requirements: true
+          additionalProperties: false
+        - properties: 
+            req_id: true
+            requirement: true
+            reason: true
+            description: true
+            specifications: true
+          additionalProperties: false
+        - properties:
+            req_id: true
+            requirement: true
+            reason: true
+            description: true
+            spec_groups: true
+          additionalProperties: false
+
+    specification_group:
+      type: object
+      description: |
+        specification_groupは、特定の要求に対応する複数の仕様を論理的に分類するための構造です。
+        要求の範囲が広く、仕様の範囲を限定して抽出していく場合に有効です。
+        複数の仕様(specificatio)を子要素として持ちます。
+      properties:
+        group_name: 
+          $ref: "#/definitions/content/name"
+        description:
+          $ref: "#/definitions/content/content"
+        specifications:
+          type: array
+          items: 
+            $ref: "#/definitions/structure/specification"
+          minItems: 1
+          maxItems: 10
+          uniqueItems: true
+      required:
+        - group_name
+        - specifications
+      additionalProperties: false
+
+    specification:
+      type: object
+      description: |
+        specificationは、要求で記述された抽象的な期待に対して、具体的な実現手段やシステム動作を記述する要素です。
+        各仕様は、関係者が誤解なく合意できる粒度で記述されている必要があります。
+        要求と同様、理由や説明を記述することができますが必須ではありません。
+      properties:
+        spec_id: 
+          $ref: "#/definitions/content/id"
+        specification:
+          $ref: "#/definitions/content/content"
+        reason:
+          $ref: "#/definitions/content/content"
+        description:
+          $ref: "#/definitions/content/content"
+      required: 
+        - spec_id
+        - specification
+      additionalProperties: false
+
+  content:
+    $comment: 各要素の記述に関する定義
+    id:
+      description: idを記述する
+      type: string
+
+    name: 
+      description: 要素名を記述する
+      type: string
+
+    content:
+      anyOf:
+        - type: string
+        - type: array
+          items:
+            $ref: "#/definitions/content/content"
+          uniqueItems: true
+        - $ref: "#/definitions/content/markdown"
+
+    markdown:
+      type: object
+      properties: 
+        type: 
+          const: markdown
+        body:
+          type: string
+          contentMediaType: text/markdown
+      required:
+        - type
+        - body
+      additionalProperties: false
